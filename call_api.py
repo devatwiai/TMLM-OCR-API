@@ -1,36 +1,26 @@
 import requests
 import cv2
-import time
-from urllib.parse import urljoin
-
+import numpy as np
+import os
 """
-Instructions: 
+Instruction: 
 1. Read an image in binary format and send it to the API using a POST request.
 2. The API returns a dictionary containing bounding box coordinates and detected text in the image.
 """
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = '/home/devesh_wadhwaniai_org/person/TMLM-OCR-API/cred.json'
+
 # API URL and the local path of the image
-ENDPOINT_URL = "http://localhost:8000/"
-image_path = "tmp.jpg"
+url = "http://localhost:8000/predict/"
+image_path = "./temp.jpg"
 
-# Open the image file in binary mode
-with open(image_path, "rb") as image_file:
-    files = {"file": image_file}
-    start_time = time.time()
-    
-    # Send a POST request to the API
-    response = requests.post(urljoin(ENDPOINT_URL, 'predict'), files=files)
-    
-    print(f"Time taken: {(time.time() - start_time):.2f} seconds")
+# Open the image in binary format to send it in the POST request
 
-    # Parse the JSON response
-    try: 
-        output = response.json()
-    except Exception as e:
-        print(f"Error: {e}")
-        print(f"Response: {response.text}")
-        output = {'output': []}    
-
+with open('temp.jpg', "rb") as image_file:
+    files = {"file": image_file}  # File data for the request
+    response = requests.post(url, files=files, verify=False)  # Send POST request
+    output = response.json()  # Get the API's JSON response
+    print(output)
     '''
     Example output:
     {
@@ -44,15 +34,7 @@ with open(image_path, "rb") as image_file:
 
 def draw_bbox(image_path, outputs):
     """
-    Draw bounding boxes on the image based on API output using OpenCV.
-    You can use any other library to draw bounding boxes.
-    
-    Args:
-        image_path (str): The path to the input image.
-        outputs (list): The list of bounding boxes and detected text.
-
-    Returns:
-        numpy.ndarray: The image with bounding boxes drawn.
+    Draw bounding boxes on the image based on API output.
     """
     
     image = cv2.imread(image_path)  # Read the image
@@ -65,6 +47,5 @@ def draw_bbox(image_path, outputs):
         
     return image
 
-# Draw bounding boxes on the original image
-img = draw_bbox(image_path, output.get("output", [])) 
-cv2.imwrite("output.jpg", img)  # Save the output image with bounding boxes
+img = draw_bbox(image_path, output["output"]) 
+cv2.imwrite("output.jpg", img) 
